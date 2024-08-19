@@ -1,0 +1,56 @@
+body {
+  font-family: sans-serif;
+}
+
+.main {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  align-items: left;
+}
+.gameField {
+  flex-direction: row;
+  display: flex;
+  align-self: center;
+  padding: 20px;
+  border-style: dashed;
+  border-color: burlywood;
+}
+.right {
+  width: 40px;
+}
+.left {
+  width: 40px;
+}
+table {
+  border-collapse: collapse;
+  margin: 30px;
+}
+#app {
+  justify-self: space-between;
+  display: grid;
+}
+.gameControls {
+  padding: 20px;
+}
+.cell {
+  border: 1px solid rgb(196, 204, 168);
+  color: lightgray;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+}
+
+.cell--alive {
+  background-color: rgb(185, 176, 123);
+}
+
+.rowcell {
+  flex-direction: row;
+}
+h1 {
+  text-align: center;
+  font-family: "Courier New", Courier, monospace;
+  color: rgb(185, 176, 123);
+}
