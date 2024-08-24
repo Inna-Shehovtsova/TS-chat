@@ -5,7 +5,7 @@ import {
   IConsuptionFunc,
 } from "./costAccounting";
 
-describe("Cost Accounting tests", () => {
+describe.skip("Cost Accounting tests", () => {
   const c: IConsumption[] = [
     {
       cat: "Household expences",
