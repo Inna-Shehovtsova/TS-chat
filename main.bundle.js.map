@@ -1,1 +1,1 @@
-{"version":3,"file":"main.bundle.js","mappings":"AAEWA,SAASC,eAAe","sources":["webpack://ts-chat/./src/index.ts"],"sourcesContent":["// import \"./style/style.css\";\n\nconst el = document.getElementById(\"app\") as HTMLElement;\n\n\n"],"names":["document","getElementById"],"sourceRoot":""}
+{"version":3,"file":"main.bundle.js","mappings":"AAEWA,SAASC,eAAe","sources":["webpack://ts-chat/./src/index.ts"],"sourcesContent":["// import \"./style/style.css\";\n\nconst el = document.getElementById(\"app\") as HTMLElement;\n"],"names":["document","getElementById"],"sourceRoot":""}
