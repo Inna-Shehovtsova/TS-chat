@@ -7,7 +7,7 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{js,mjs,cjs,ts}"],
+    files: ["**/*.{js,mjs,cjs,ts}", "**/**/*.{js,mjs,cjs,ts}"],
     rules: {
       "no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
