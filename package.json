@@ -43,7 +43,9 @@
     "webpack-cli": "^5.1.4"
   },
   "lint-staged": {
-    "*.{js, ts}": "eslint --cache --fix",
-    "*.{js,css,md, ts}": "prettier --write"
+    "*.{js,ts}": "eslint --cache --fix ",
+    "*/**/*.{js, ts}": "eslint --cache --fix",
+    "*.{js,css,md,ts}": "prettier --write",
+    "*/**/*.{js,css,md, ts}": "prettier --write"
   }
 }

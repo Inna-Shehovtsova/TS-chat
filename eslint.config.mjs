@@ -7,12 +7,17 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{js,mjs,cjs,ts}", "**/**/*.{js,mjs,cjs,ts}"],
+    ignores:[
+      "!dist/",".dist/*", ".dist/main.bundle.js"
+    ],},
+    {
+    files: ["src/*.{js,mjs,cjs,ts}", "src/**/*.{js,mjs,cjs,ts}"],
     rules: {
       "no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-unsafe-function-type": "warn",
     },
+   
   },
   {
     files: ["webpack.config.js", "jest.config.js"],
