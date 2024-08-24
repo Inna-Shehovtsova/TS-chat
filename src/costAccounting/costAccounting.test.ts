@@ -113,6 +113,27 @@ describe("Cost Accounting tests", () => {
         const someOfLast = ["Household expences", 645];           
         expect(hExp[1][1]).toBe(someOfLast[1]);
         expect(hExp[1][0]).toStrictEqual(someOfLast[0]);
+        
+        const hExpDate = cc.sortedCatSum(new Date(2024, 1, 1), new Date(2024, 2, 3));        
+        expect(hExpDate.length).toBe(2);
+        const firstD = ["Household expences",420];
+        expect(hExpDate[0]).toStrictEqual(firstD);
+        const seconcD = ["Clothes",0];
+        expect(hExpDate[1]).toStrictEqual(seconcD);
+      });
+
+      it("add remove item check", () => {   
+        const f = Array<IConsumption>();    
+        let cc = new CostAccounting ( f  );       
+        expect(cc.accounting.length).toBe(0);
+        cc.setItem("Eat", "At home", 300, '');
+        expect(cc.accounting.length).toBe(1);
+        cc.setItem("Eat", "At home", 200, 'two');
+        expect(cc.accounting.length).toBe(2);
+        
+        cc.removeItem("Eat", "At home", 200, new Date());
+        expect(cc.accounting.length).toBe(1);
+        expect(cc.accounting[0].quantity).toBe(300);
       });
     });
 });
