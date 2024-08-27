@@ -7,14 +7,13 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["!dist/", ".dist/*", ".dist/main.bundle.js"],
-  },
-  {
+    ignores: ["!dist/", ".dist/*"],
     files: ["src/*.{js,mjs,cjs,ts}", "src/**/*.{js,mjs,cjs,ts}"],
     rules: {
       "no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-unsafe-function-type": "warn",
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   {

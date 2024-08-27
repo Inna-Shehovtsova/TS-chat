@@ -48,5 +48,8 @@
     "*/**/*.{js, ts}": "eslint --cache --fix",
     "*.{js,css,md,ts}": "prettier --write",
     "*/**/*.{js,css,md, ts}": "prettier --write"
+  },
+  "dependencies": {
+    "firebase": "^10.13.0"
   }
 }
