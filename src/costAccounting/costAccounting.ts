@@ -1,33 +1,15 @@
-export interface IConsumption {
-  cat: string;
-  subcat: string;
-  date: Date;
-  quantity: number;
-  comment: string;
-}
-
-export type tCategorizedSum = [string, number];
-
-export interface IConsumptionStatistic {
-  categorizedExpenditure(
-    cat?: string,
-    startDate?: Date,
-    endDate?: Date,
-  ): number;
-  uncatExpenditure(startDate?: Date, endDate?: Date): number;
-  filteredSum(filter: (el: IConsumption) => boolean): number;
-  sortedCatSum(startDate?: Date, endDate?: Date): tCategorizedSum[];
-}
-
-export interface IConsuptionFunc {
-  getCategories(): Set<string>;
-  setItem(cat: string, subcat: string, sum: number, comment: string): void;
-  removeItem(cat: string, subcat: string, sum: number, date: Date): void;
-}
-
+import {
+  IConsumption,
+  IConsumptionStatistic,
+  IConsuptionFunc,
+  tCategorizedSum,
+  tFilterFunction,
+} from "./icostAccounting";
 export class CostAccounting implements IConsumptionStatistic, IConsuptionFunc {
   accounting: Array<IConsumption>;
-
+  constructor(ccounting: Array<IConsumption>) {
+    this.accounting = ccounting;
+  }
   getCategories(): Set<string> {
     return this.accounting.reduce(
       (acc, el) => acc.add(el.cat),
@@ -64,31 +46,33 @@ export class CostAccounting implements IConsumptionStatistic, IConsuptionFunc {
   }
 
   categorizedExpenditure(cat?: string, startDate?: Date, endDate?: Date) {
-    return this.accounting
-      .filter((el) => {
-        let ret: boolean = true;
-        if (cat) {
-          ret = ret && el.cat === cat;
-        }
-        if (startDate) {
-          ret = ret && el.date >= startDate;
-        }
-        if (endDate) {
-          ret = ret && el.date <= endDate;
-        }
-        return ret;
-      })
-      .reduce((prev, curr) => prev + curr.quantity, 0);
+    const filter: tFilterFunction = (el: IConsumption) => {
+      let ret: boolean = true;
+      if (cat) {
+        ret = ret && el.cat === cat;
+      }
+      if (startDate) {
+        ret = ret && el.date >= startDate;
+      }
+      if (endDate) {
+        ret = ret && el.date <= endDate;
+      }
+      return ret;
+    };
+    return this.filteredSum(filter);
   }
 
   uncatExpenditure(startDate?: Date, endDate?: Date) {
     return this.categorizedExpenditure(undefined, startDate, endDate);
   }
 
-  filteredSum(cbfilter: (el: IConsumption) => boolean): number {
+  filteredSum(cbfilter: tFilterFunction): number {
     return this.accounting
       .filter(cbfilter)
-      .reduce((prev, curr) => prev + curr.quantity, 0);
+      .reduce(
+        (prev, curr) => (cbfilter(curr) ? prev + curr.quantity : prev),
+        0,
+      );
   }
 
   sortedCatSum(startDate?: Date, endDate?: Date): tCategorizedSum[] {
@@ -98,9 +82,5 @@ export class CostAccounting implements IConsumptionStatistic, IConsuptionFunc {
       (el) => (el[1] = this.categorizedExpenditure(el[0], startDate, endDate)),
     );
     return ret.sort((a, b) => b[1] - a[1]);
-  }
-
-  constructor(ccounting: Array<IConsumption>) {
-    this.accounting = ccounting;
   }
 }
