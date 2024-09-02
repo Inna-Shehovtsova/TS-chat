@@ -1,0 +1,25 @@
+name: Deploy to GithubPages
+
+on:
+  push:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependences
+        run: |
+          npm install
+      - name: Build
+        run: |
+          webpack --mode production
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
