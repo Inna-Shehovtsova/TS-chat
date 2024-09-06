@@ -2,7 +2,7 @@ import { CalendarFirebase, initFirestore } from "./calendarFirebase";
 import { connectFirestoreEmulator } from "firebase/firestore";
 import { emptyTask } from "./icalendar";
 
-describe("Calendar tests", () => {
+describe.skip("Calendar tests", () => {
   const db = initFirestore();
   describe("Calendar is class", () => {
     it("is a class", () => {

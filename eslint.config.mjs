@@ -7,7 +7,10 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["!dist/", ".dist/*"],
+    ignores: ["!dist/", ".dist/*", "functions/*"],
+  },
+  {
+    ignores: ["!dist/", ".dist/*", "functions/*"],
     files: ["src/*.{js,mjs,cjs,ts}", "src/**/*.{js,mjs,cjs,ts}"],
     rules: {
       "no-unused-vars": "warn",
