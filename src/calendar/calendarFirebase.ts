@@ -1,9 +1,16 @@
-import { ITask, ITaskCRUD, EStatus, emptyTask } from "./icalendar";
-// // Import the functions you need from the SDKs you need
-import { FirebaseApp, initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
-import { collection, addDoc, getDocs, doc, setDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import {
+  doc,
+  getDoc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import { ITask, emptyTask } from "./icalendar";
+import { collection, getDocs } from "firebase/firestore";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -12,6 +19,8 @@ import { getAuth } from "firebase/auth";
 const firebaseConfig = {
   apiKey: "AIzaSyAVRyc1hbMmUzK69pSvVZRQ26RKokhx--M",
   authDomain: "studentcalendar-1076c.firebaseapp.com",
+  databaseURL:
+    "https://studentcalendar-1076c-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "studentcalendar-1076c",
   storageBucket: "studentcalendar-1076c.appspot.com",
   messagingSenderId: "860419721981",
@@ -19,130 +28,111 @@ const firebaseConfig = {
   measurementId: "G-HE7GD4Z88L",
 };
 
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+  Firestore,
+} from "firebase/firestore";
+
+// firebaseApps previously initialized using initializeApp()
+const db = getFirestore();
+connectFirestoreEmulator(db, "127.0.0.1", 8080);
+
+export function initFirestore(): Firestore {
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  return db;
+}
+
 // Firestore data converter
 const calendarConverter = {
-  toFirestore: (data: ITask) => {
+  toFirestore: (el: ITask) => {
     return {
-      id: data.id ?? 0,
-      desc: data.desc,
-      dueDate: JSON.stringify(data.dueDate),
-      crDate: JSON.stringify(data.crDate),
-      status: data.status,
-      tag: data.tag,
+      id: el.id,
+      desk: el.desc,
+      dueDate: el.dueDate,
+      crDate: el.crDate,
+      status: el.status,
+      tag: el.tag,
     };
   },
   fromFirestore: (snapshot: any, options: any) => {
     const data = snapshot.data(options);
-    const ret: ITask = {
-      id: data.id,
-      desc: data.desc,
-      dueDate: JSON.parse(data.dueDate),
-      crDate: JSON.parse(data.crDate),
-      status: data.status,
-      tag: data.tag,
-    };
+    const ret = Object.assign({}, emptyTask);
+    ret.crDate = data.crDate;
+    ret.desc = data.desc;
+    ret.dueDate = data.dueDate;
+    ret.id = data.id;
+    ret.status = data.status;
+    ret.tag = data.tag;
     return ret;
   },
 };
 
 export class CalendarFirebase {
   db: Firestore;
-  app: FirebaseApp;
-  table: string;
-  maxId: number;
-  tasks: Array<ITask>;
-  auth: any;
-  async create(
-    desc: string,
-    startDate: Date,
-    dueDate: Date,
-    tag?: string,
-  ): Promise<void> {
-    const task = {
-      desc: desc,
-      status: 0,
-      dueDate: JSON.stringify(dueDate),
-      crDate: JSON.stringify(startDate),
-      id: ++this.maxId,
-    };
-    // task.status = 0;
-    // task.desc = desc;
-    // //task.crDate = startDate;
-    // //task.dueDate = dueDate;
-    // task.dueDate = JSON.stringify(dueDate),
-    // task.crDate  = JSON.stringify(startDate),
-    // task.id = ++this.maxId;
-    //const ref = doc(this.db, this.table).withConverter(calendarConverter);
-    console.log("create firebase");
-    const ref = doc(this.db, this.table, task.id.toString());
-    //console.log('in create ', ref.id, " ", ref.path, ref.parent);
-    await setDoc(ref, task);
-    //console.log('in create 2',ref.id, " ", ref.path, ref.parent);
+  tablename: string;
+  constructor(db: Firestore) {
+    this.db = db;
+    this.tablename = "calendar";
+  }
+  async readOne(id: number): Promise<ITask | null> {
+    let ret: ITask | null = null;
+    const docRef = doc(db, this.tablename, String(id)).withConverter(
+      calendarConverter,
+    );
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      // Convert to City object
+      ret = docSnap.data();
+      // Use a City instance method
+    } else {
+      console.log("No such document!");
+    }
+
+    return ret;
   }
   async read(): Promise<ITask[]> {
-    console.log("read firebase");
-    this.tasks = new Array<ITask>();
-    try {
-      const querySnapshot = await getDocs(
-        collection(this.db, this.table).withConverter(calendarConverter),
-      );
-      querySnapshot.forEach((doc) => {
-        //let el:ITask = Object.assign(doc.data(), emptyTask);
-        // this.tasks.push(el);
-        console.log(`${doc.id} => ${doc.data()}`);
-      });
-    } catch (exeption) {
-      console.log(exeption);
-    }
-    return this.tasks;
+    const ret: ITask[] = new Array<ITask>();
+    const collRef = collection(this.db, this.tablename).withConverter(
+      calendarConverter,
+    );
+    const querySnapshot = await getDocs(collRef);
+    querySnapshot.forEach((doc) => {
+      ret.push(doc.data());
+    });
+    return ret;
   }
-  //update(newTask: ITask):  Promise<void>;
-  // delete(task: ITask):  Promise<void>;
-  constructor() {
+  async writeOne(el: ITask): Promise<void> {
     try {
-      this.app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-      //console.log(this.app);
-      this.db = getFirestore(this.app);
-      this.auth = getAuth(this.app);
-    } catch (err) {
-      console.log("error in constructor ", err);
+      const docRef = doc(
+        this.db,
+        this.tablename,
+        el.id.toString(),
+      ).withConverter(calendarConverter);
+      await setDoc(docRef, el);
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
     }
-    //console.log(this.db);
-    this.table = "my_student_calendar";
-    this.maxId = 0;
-    this.tasks = [];
-    console.log("end constructor");
+  }
+  async write(arr: ITask[]): Promise<void> {
+    for (let i = 0; i < arr.length; i++) {
+      await this.writeOne(arr[i]);
+    }
+  }
+  async update(newTask: ITask): Promise<void> {
+    const elRef = doc(
+      this.db,
+      this.tablename,
+      newTask.id.toString(),
+    ).withConverter(calendarConverter);
+
+    await updateDoc(elRef, newTask);
+  }
+  async delete(task: ITask): Promise<void> {
+    await deleteDoc(doc(this.db, this.tablename, task.id.toString()));
   }
 }
-// // Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-// // Initialize Cloud Firestore and get a reference to the service
-// const db = getFirestore(app);
-
-// import { collection, addDoc } from "firebase/firestore";
-
-// try {
-//   const docRef = await addDoc(collection(db, "users"), {
-//     first: "Ada",
-//     last: "Lovelace",
-//     born: 1815
-//   });
-//   console.log("Document written with ID: ", docRef.id);
-// } catch (e) {
-//   console.error("Error adding document: ", e);
-// }
-
-// import { collection, getDocs } from "firebase/firestore";
-
-// const querySnapshot = await getDocs(collection(db, "users"));
-// querySnapshot.forEach((doc) => {
-//   console.log(`${doc.id} => ${doc.data()}`);
-// });
-// // Allow read/write access to a document keyed by the user's UID
-// service cloud.firestore {
-//     match /databases/{database}/documents {
-//       match /users/{uid} {
-//         allow read, write: if request.auth != null && request.auth.uid == uid;
-//       }
-//     }
-//   }

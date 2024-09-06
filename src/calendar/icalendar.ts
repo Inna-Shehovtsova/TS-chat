@@ -6,17 +6,17 @@ export enum EStatus {
   InProcess,
 }
 export interface ITask {
-  id?: number | undefined;
+  id: number;
   desc: string;
-  dueDate: string | undefined;
-  crDate: string | undefined;
+  dueDate: string;
+  crDate: string;
   status: EStatus;
   tag: string;
 }
 export const emptyTask: ITask = {
   desc: "",
-  crDate: undefined,
-  dueDate: undefined,
+  crDate: JSON.stringify(Date()),
+  dueDate: JSON.stringify(Date()),
   status: EStatus.Undone,
   tag: "",
   id: 0,

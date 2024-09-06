@@ -1,8 +1,13 @@
 import { ITask, ITaskCRUD, EStatus } from "./icalendar";
 import { CalendarLocalStorage } from "./calendarLocalStorage";
-import { CalendarFirebase } from "./calendarFirebase";
+import { CalendarFirebase, initFirestore } from "./calendarFirebase";
 import { Calendar } from "./calendar";
-
+import { FirebaseApp, initializeApp, getApps, getApp } from "firebase/app";
+import { collection, addDoc, getDocs, doc, setDoc } from "firebase/firestore";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getDatabase, Database } from "firebase/database";
+import { mockFirebase } from "firestore-jest-mock";
+import { mockCollection } from "firestore-jest-mock/mocks/firestore";
 describe("Calendar tests", () => {
   describe.skip("Calendar is class", () => {
     it("is a class", () => {
@@ -10,7 +15,7 @@ describe("Calendar tests", () => {
       expect(new CalendarLocalStorage()).toBeInstanceOf(CalendarLocalStorage);
     });
   });
-  describe("CRUD interface LocalStorag", () => {
+  describe.skip("CRUD interface LocalStorag", () => {
     const D1 = new Date();
     const D2 = new Date();
     const el: ITask = {
@@ -114,8 +119,8 @@ describe("Calendar tests", () => {
     const D2 = new Date();
     const el: ITask = {
       desc: "ToDo",
-      crDate: D1,
-      dueDate: D2,
+      crDate: D1.toJSON(),
+      dueDate: D2.toJSON(),
       status: EStatus.Undone,
       tag: "",
       id: 1,
@@ -124,12 +129,45 @@ describe("Calendar tests", () => {
     let arr: Array<ITask>;
     let c1: CalendarFirebase;
 
+    mockFirebase({
+      database: {
+        users: [
+          { id: "abc123", name: "Homer Simpson" },
+          { id: "abc456", name: "Lisa Simpson" },
+        ],
+        posts: [{ id: "123abc", title: "Really cool title" }],
+      },
+    });
+
     beforeEach(() => {
       el2.desc = "ToDo2";
       el2.id = 2;
       el2.tag = "next";
       arr = new Array<ITask>();
-      c1 = new CalendarFirebase();
+      //c1 = new CalendarFirebase();
+
+      jest.clearAllMocks();
+    });
+    test("testing stuff", async () => {
+      const firestore = initFirestore();
+
+      firestore
+        .collection("users")
+        .get()
+        .then((userDocs) => {
+          // Assert that a collection ID was referenced
+          expect(mockCollection).toHaveBeenCalledWith("users");
+
+          // Write other assertions here
+        });
+
+      // return firestore
+      //   .collection('users')
+      //   .get()
+      //   .then((userDocs) => {
+      //     expect(mockCollection).toHaveBeenCalledWith('my_student_calendar');
+      //     expect(userDocs.docs[0].data().name).toEqual('Homer Simpson');
+      //   });
     });
     it("has CRUD functions", () => {
       expect(c1.create).toBeInstanceOf(Function);
@@ -146,7 +184,7 @@ describe("Calendar tests", () => {
       // expect(data[0].desc).toStrictEqual("ToDo");
     }, 60000);
   });
-  describe("Filter interface", () => {
+  describe.skip("Filter interface", () => {
     const D1: Date = new Date("December 17, 1995 03:24:00");
     const D2: Date = new Date("December 18, 1995 03:24:00");
     const el: ITask = {

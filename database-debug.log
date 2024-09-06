@@ -1,0 +1,4 @@
+20:56:51.419 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+20:56:51.540 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
+20:56:57.043 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO com.firebase.core.namespace.NamespaceActor - studentcalendar-1076c-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 97ms, init: 0ms
+20:56:57.091 [NamespaceSystem-blocking-namespace-operation-dispatcher-8] INFO com.firebase.core.namespace.StateManager - Namespace studentcalendar-1076c-default-rtdb status Active to Active
