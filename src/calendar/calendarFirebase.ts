@@ -1,13 +1,14 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import {
-  doc,
-  getDoc,
-  addDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
+//import { initializeApp } from "firebase/app";
+import firebase from "firebase/compat/app";
+// import {
+//   doc,
+//   getDoc,
+//   addDoc,
+//   setDoc,
+//   updateDoc,
+//   deleteDoc,
+// } from "firebase/firestore";
 import { ITask, emptyTask } from "./icalendar";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -16,7 +17,7 @@ import { collection, getDocs } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyAVRyc1hbMmUzK69pSvVZRQ26RKokhx--M",
   authDomain: "studentcalendar-1076c.firebaseapp.com",
   databaseURL:
@@ -28,21 +29,21 @@ const firebaseConfig = {
   measurementId: "G-HE7GD4Z88L",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-import {
-  getFirestore,
-  connectFirestoreEmulator,
-  Firestore,
-} from "firebase/firestore";
+// // Initialize Firebase
+// const app = initializeApp(firebaseConfig);
+// import {
+//   getFirestore,
+//   connectFirestoreEmulator,
+//   Firestore,
+// } from "firebase/firestore";
 
 // firebaseApps previously initialized using initializeApp()
-const db = getFirestore();
-connectFirestoreEmulator(db, "127.0.0.1", 8080);
+//const db = getFirestore();
+//connectFirestoreEmulator(db, "127.0.0.1", 8080);
 
-export function initFirestore(): Firestore {
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+export function initFirestore(): firebase.firestore.Firestore {
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore(app);
   return db;
 }
 
@@ -51,7 +52,7 @@ const calendarConverter = {
   toFirestore: (el: ITask) => {
     return {
       id: el.id,
-      desk: el.desc,
+      desc: el.desc,
       dueDate: el.dueDate,
       crDate: el.crDate,
       status: el.status,
@@ -72,67 +73,94 @@ const calendarConverter = {
 };
 
 export class CalendarFirebase {
-  db: Firestore;
+  db: firebase.firestore.Firestore;
   tablename: string;
-  constructor(db: Firestore) {
+  constructor(db: firebase.firestore.Firestore) {
     this.db = db;
     this.tablename = "calendar";
   }
-  async readOne(id: number): Promise<ITask | null> {
-    let ret: ITask | null = null;
-    const docRef = doc(db, this.tablename, String(id)).withConverter(
-      calendarConverter,
-    );
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      // Convert to City object
-      ret = docSnap.data();
-      // Use a City instance method
-    } else {
-      console.log("No such document!");
-    }
-
-    return ret;
-  }
   async read(): Promise<ITask[]> {
     const ret: ITask[] = new Array<ITask>();
-    const collRef = collection(this.db, this.tablename).withConverter(
-      calendarConverter,
-    );
-    const querySnapshot = await getDocs(collRef);
+    //console.log(this.db);
+    const querySnapshot = await this.db
+      .collection(this.tablename)
+      .withConverter(calendarConverter)
+      .get();
+    //const querySnapshot = await getDocs(collRef);
     querySnapshot.forEach((doc) => {
       ret.push(doc.data());
     });
     return ret;
   }
+
   async writeOne(el: ITask): Promise<void> {
+    console.log("in write");
     try {
-      const docRef = doc(
-        this.db,
-        this.tablename,
-        el.id.toString(),
-      ).withConverter(calendarConverter);
-      await setDoc(docRef, el);
+      const docRef = this.db.collection(this.tablename).doc(el.id.toString());
+      console.log(docRef);
+      await docRef.set(el);
+
       console.log("Document written with ID: ", docRef.id);
     } catch (e) {
       console.error("Error adding document: ", e);
     }
   }
+  //   async readOne(id: number): Promise<ITask | null> {
+  //     let ret: ITask | null = null;
+  //     const docRef = doc(this.db, this.tablename, String(id)).withConverter(
+  //       calendarConverter,
+  //     );
+  //     const docSnap = await getDoc(docRef);
+  //     if (docSnap.exists()) {
+  //       // Convert to City object
+  //       ret = docSnap.data();
+  //       // Use a City instance method
+  //     } else {
+  //       console.log("No such document!");
+  //     }
+
+  //     return ret;
+  //   }
+  //   async read(): Promise<ITask[]> {
+  //     const ret: ITask[] = new Array<ITask>();
+  //     console.log(this.db);
+  //     const collRef = collection(this.db, this.tablename).withConverter(
+  //       calendarConverter,
+  //     );
+  //     const querySnapshot = await getDocs(collRef);
+  //     querySnapshot.forEach((doc) => {
+  //       ret.push(doc.data());
+  //     });
+  //     return ret;
+  //   }
+  //   async writeOne(el: ITask): Promise<void> {
+  //     try {
+  //       const docRef = doc(
+  //         this.db,
+  //         this.tablename,
+  //         el.id.toString(),
+  //       ).withConverter(calendarConverter);
+  //       await setDoc(docRef, el);
+  //       console.log("Document written with ID: ", docRef.id);
+  //     } catch (e) {
+  //       console.error("Error adding document: ", e);
+  //     }
+  //   }
   async write(arr: ITask[]): Promise<void> {
     for (let i = 0; i < arr.length; i++) {
       await this.writeOne(arr[i]);
     }
   }
-  async update(newTask: ITask): Promise<void> {
-    const elRef = doc(
-      this.db,
-      this.tablename,
-      newTask.id.toString(),
-    ).withConverter(calendarConverter);
+  //   async update(newTask: ITask): Promise<void> {
+  //     const elRef = doc(
+  //       this.db,
+  //       this.tablename,
+  //       newTask.id.toString(),
+  //     ).withConverter(calendarConverter);
 
-    await updateDoc(elRef, newTask);
-  }
-  async delete(task: ITask): Promise<void> {
-    await deleteDoc(doc(this.db, this.tablename, task.id.toString()));
-  }
+  //     await updateDoc(elRef, newTask);
+  //   }
+  //   async delete(task: ITask): Promise<void> {
+  //     await deleteDoc(doc(this.db, this.tablename, task.id.toString()));
+  //   }
 }
