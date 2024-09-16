@@ -151,16 +151,28 @@ export class CalendarFirebase {
       await this.writeOne(arr[i]);
     }
   }
-  //   async update(newTask: ITask): Promise<void> {
-  //     const elRef = doc(
-  //       this.db,
-  //       this.tablename,
-  //       newTask.id.toString(),
-  //     ).withConverter(calendarConverter);
+  // async update(newTask: ITask): Promise<void> {
+  //   const elRef = doc(
+  //     this.db,
+  //     this.tablename,
+  //     newTask.id.toString(),
+  //   ).withConverter(calendarConverter);
 
-  //     await updateDoc(elRef, newTask);
-  //   }
-  //   async delete(task: ITask): Promise<void> {
-  //     await deleteDoc(doc(this.db, this.tablename, task.id.toString()));
-  //   }
+  //   await updateDoc(elRef, newTask);
+  // }
+  //async delete(task: ITask): Promise<void> {
+  //   await deleteDoc(doc(this.db, this.tablename, task.id.toString()));
+  // }
+  async update(newTask: ITask): Promise<void> {
+    const elRef = this.db
+      .collection(this.tablename)
+      .doc(newTask.id.toString())
+      .withConverter(calendarConverter);
+
+    await elRef.update(newTask);
+  }
+  async delete(task: ITask): Promise<void> {
+    const elRef = this.db.collection(this.tablename).doc(task.id.toString());
+    await elRef.delete();
+  }
 }

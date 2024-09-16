@@ -9,13 +9,13 @@ import { getDatabase, Database } from "firebase/database";
 import { mockFirebase } from "firestore-jest-mock";
 import { mockCollection } from "firestore-jest-mock/mocks/firestore";
 describe("Calendar tests", () => {
-  describe.skip("Calendar is class", () => {
+  describe("Calendar is class", () => {
     it("is a class", () => {
       expect(CalendarLocalStorage).toBeInstanceOf(Function);
       expect(new CalendarLocalStorage()).toBeInstanceOf(CalendarLocalStorage);
     });
   });
-  describe.skip("CRUD interface LocalStorag", () => {
+  describe("CRUD interface LocalStorag", () => {
     const D1 = new Date();
     const D2 = new Date();
     const el: ITask = {
@@ -114,77 +114,8 @@ describe("Calendar tests", () => {
       expect(localStorage.__STORE__[KEY]).toBe(VALUE2);
     });
   });
-  describe.skip("CRUD interface Firebase", () => {
-    const D1 = new Date();
-    const D2 = new Date();
-    const el: ITask = {
-      desc: "ToDo",
-      crDate: D1.toJSON(),
-      dueDate: D2.toJSON(),
-      status: EStatus.Undone,
-      tag: "",
-      id: 1,
-    };
-    const el2: ITask = Object.assign({}, el);
-    let arr: Array<ITask>;
-    let c1: CalendarFirebase;
 
-    mockFirebase({
-      database: {
-        users: [
-          { id: "abc123", name: "Homer Simpson" },
-          { id: "abc456", name: "Lisa Simpson" },
-        ],
-        posts: [{ id: "123abc", title: "Really cool title" }],
-      },
-    });
-
-    beforeEach(() => {
-      el2.desc = "ToDo2";
-      el2.id = 2;
-      el2.tag = "next";
-      arr = new Array<ITask>();
-      //c1 = new CalendarFirebase();
-
-      jest.clearAllMocks();
-    });
-    test("testing stuff", async () => {
-      const firestore = initFirestore();
-
-      firestore
-        .collection("users")
-        .get()
-        .then((userDocs) => {
-          // Assert that a collection ID was referenced
-          expect(mockCollection).toHaveBeenCalledWith("users");
-
-          // Write other assertions here
-        });
-
-      // return firestore
-      //   .collection('users')
-      //   .get()
-      //   .then((userDocs) => {
-      //     expect(mockCollection).toHaveBeenCalledWith('my_student_calendar');
-      //     expect(userDocs.docs[0].data().name).toEqual('Homer Simpson');
-      //   });
-    });
-    it("has CRUD functions", () => {
-      expect(c1.create).toBeInstanceOf(Function);
-      expect(c1.read).toBeInstanceOf(Function);
-      //expect(c1.update).toBeInstanceOf(Function);
-      //expect(c1.delete).toBeInstanceOf(Function);
-    });
-    it("can create element", async () => {
-      expect(c1.tasks.length).toBe(0);
-      arr.push(el);
-      await c1.create("ToDo", D1, D2);
-      const data = await c1.read();
-      // expect(data.length).toBe(1);
-      // expect(data[0].desc).toStrictEqual("ToDo");
-    }, 60000);
-  });
-  describe.skip("Filter interface", () => {
+  describe("Filter interface", () => {
     const D1: Date = new Date("December 17, 1995 03:24:00");
     const D2: Date = new Date("December 18, 1995 03:24:00");
     const el: ITask = {
