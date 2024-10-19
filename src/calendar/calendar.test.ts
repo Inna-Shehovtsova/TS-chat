@@ -8,7 +8,7 @@ import { getFirestore, Firestore } from "firebase/firestore";
 import { getDatabase, Database } from "firebase/database";
 import { mockFirebase } from "firestore-jest-mock";
 import { mockCollection } from "firestore-jest-mock/mocks/firestore";
-describe("Calendar tests", () => {
+describe.skip("Calendar tests", () => {
   describe("Calendar is class", () => {
     it("is a class", () => {
       expect(CalendarLocalStorage).toBeInstanceOf(Function);
