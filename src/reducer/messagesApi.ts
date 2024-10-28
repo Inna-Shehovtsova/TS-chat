@@ -1,3 +1,5 @@
+import { IMessage } from "./iMessage";
+
 const config = {
   firebaseBaseUrl: "https://otus-js-chat-4ed79-default-rtdb.firebaseio.com",
   firebaseCollection: "messages.json",
@@ -28,7 +30,7 @@ export async function getMessagesList() {
 //  * @param {string} data.message
 //  * @returns {boolean}
 //  */
-export async function sendMessage(data) {
+export async function sendMessage(data: IMessage) {
   return fetch(`${config.firebaseBaseUrl}/${config.firebaseCollection}`, {
     method: "POST",
     body: JSON.stringify({

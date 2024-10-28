@@ -71,7 +71,7 @@ export function receiveMessages(theme: any, messages: Array<IMessage>) {
     receivedAt: Date.now(),
   };
 }
-export function sendMessage(message: IMessage) {
+export function sendOneMessage(message: IMessage) {
   return {
     type: SEND_MESSAGE,
 
@@ -104,80 +104,5 @@ export function setStorage(storage: IMessageFunctions) {
   return {
     type: SET_STORAGE,
     storage,
-  };
-}
-
-export function asyncGet() {
-  return (dispatch: Dispatch, getState: any) => {
-    dispatch(requestMessages(""));
-    console.log("request messate");
-    getState()
-      .message.messageStorage!.read()
-      .then((mesAr: IMessage[]) => {
-        console.log("before");
-        dispatch(receiveMessages("", mesAr));
-        console.log("after");
-      });
-  };
-}
-
-export function asyncGetMessages(theme: string) {
-  return (dispatch: Dispatch, getState: any) => {
-    dispatch(requestMessages(theme));
-    console.log("request messate");
-    getState()
-      .messageStorage.getDesk(theme)
-      .then((mesAr: IMessage[]) => {
-        console.log("before");
-        dispatch(receiveMessages(theme, mesAr));
-        console.log("after");
-      });
-  };
-}
-
-export function asyncSend(mess: IMessage) {
-  return (dispatch: Dispatch, getState: any) => {
-    dispatch(typeMessage(mess));
-    console.log("type messate");
-    getState()
-      .message.messageStorage!.writeOne(mess)
-      .then(() => {
-        console.log("before send");
-        dispatch(sendMessage(mess));
-        console.log("after send");
-      });
-  };
-}
-
-function shouldBrowseMessages(state: StateMessages, theme: string) {
-  const timestampnow = Date.now() + state.delay;
-  const selectedTheme = theme === (state.selectedTheme ?? "");
-  let invalidate = state.messages.didInvalidate;
-  let lastUpdTime = state.messages.lastUpdated ?? 0;
-  if (!selectedTheme) {
-    return true;
-  }
-  if (selectedTheme) {
-    lastUpdTime = state.messages.lastUpdated ?? 0;
-    invalidate = state.messages.didInvalidate;
-  }
-  if (timestampnow > lastUpdTime) {
-    return true;
-  }
-  return invalidate;
-}
-export function browseMessagesIfNeeded(theme: string) {
-  return (dispatch: any, state: any) => {
-    if (shouldBrowseMessages(state, theme)) {
-      return dispatch(asyncGetMessages(theme));
-    }
-  };
-}
-
-export function browseAllMessagesIfNeeded() {
-  return (dispatch: any, state: any) => {
-    if (shouldBrowseMessages(state, "")) {
-      return dispatch(asyncGet());
-    }
   };
 }

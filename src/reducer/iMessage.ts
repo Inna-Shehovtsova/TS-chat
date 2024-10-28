@@ -1,14 +1,13 @@
 export interface IMessage {
-  id: number;
-  message: string;
   name: string;
-  crDate: string;
+  message: string;
+  now: number;
+  date?: Date;
 }
 export const emptyMessage: IMessage = {
   message: "",
-  crDate: JSON.stringify(Date()),
+  now: Date.now(),
   name: "",
-  id: 0,
 };
 
 export interface IMessageCRUD {

@@ -6,7 +6,6 @@
 import { combineReducers, configureStore, Dispatch } from "@reduxjs/toolkit";
 import { emptyMessage, IMessage, IMessageFunctions } from "./iMessage";
 import { actionMessage, selectTheme } from "./Action";
-import { initFirestore, MessageFirebase } from "./messageFirebase";
 
 export interface IThemeMessages {
   isFetching: boolean;
@@ -69,7 +68,7 @@ const initialUsers: IUsers = {
   didInvalidate: false,
   items: [],
 };
-
+export type combineState = { message: StateMessages; users: StateUsers };
 export const reducer = (state = initalState, action: actionMessage) => {
   const nS = { ...state };
   switch (action.type) {
@@ -158,44 +157,8 @@ export const reducerUsers = (
   }
 };
 
-/*export function configureStore(reducer: Reducer<State, Action>, state: State) {
-  const functionsSave = new Set<Function>();
-  const o = {
-    getState() {
-      return state;
-    },
-    dispatch(action: Action) {
-      state = reducer(state, action);
-      for (const cb of functionsSave) {
-        cb();
-      }
-    },
-    subscribe(cb: Function) {
-      functionsSave.add(cb);
-      return () => {
-        functionsSave.delete(cb);
-      };
-    },
-  };
-  return o;
-}
-*/
-/*
-const store = configureStore(reducer, {
-  allMess: new Array<IMessage>(),
-  messages: undefined,
-  users: undefined,
-  error: undefined,
-});*/
-export type combineState = { message: StateMessages; users: StateUsers };
-
 export const rootReducer = combineReducers({
   // Define a top-level state field named `todos`, handled by `todosReducer`
   message: reducer,
   users: reducerUsers,
-});
-const store = configureStore({
-  reducer: rootReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ serializableCheck: false }),
 });
