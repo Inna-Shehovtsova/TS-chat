@@ -3,50 +3,103 @@
 //отправка сообщения
 //получение списка пользователей
 //поиск по чату
-export type Tmessage = {
-  name: string;
-  message: string;
-  id: number;
-  crDate: Date;
-};
-export type State = {
-  allMess: Array<Tmessage>;
-  messages?: Array<Tmessage>;
-  users?: Array<string>;
+import { combineReducers, configureStore, Dispatch } from "@reduxjs/toolkit";
+import { IMessage, IMessageFunctions } from "./iMessage";
+import { actionMessage, selectTheme } from "./Action";
+import { initFirestore, MessageFirebase } from "./messageFirebase";
+
+export interface IThemeMessages {
+  isFetching: boolean;
+  didInvalidate: boolean;
+  lastUpdated?: number;
+  items: Array<IMessage>;
   error?: string;
+}
+export interface IUsers {
+  isFetching: boolean;
+  didInvalidate: boolean;
+  lastUpdated?: number;
+  items: Array<string>;
+  error?: string;
+}
+export interface ISendMessage {
+  message: IMessage;
+  isSend: boolean;
+  error?: string;
+}
+
+export type StateMessages = {
+  selectedTheme?: string;
+  selectedID?: string;
+  messages: IThemeMessages;
+  messageSend?: ISendMessage;
+  messageStorage?: IMessageFunctions;
+  delay: number;
+};
+export type StateUsers = {
+  users: IUsers;
+  messageStorage?: IMessageFunctions;
+  delay: number;
 };
 
-export type Action =
-  | {
-      type: "getList";
-    }
-  | {
-      type: "getMessage";
-      payload: { id: number };
-    }
-  | {
-      type: "sendMessage";
-      payload: { message: string; name: string };
-    }
-  | {
-      type: "getUsers";
-    }
-  | {
-      type: "findMessageFromUser";
-      payload: { name: string };
-    }
-  | {
-      type: "findMessageByWord";
-      payload: { find: string };
-    };
+export const initalState: StateMessages = {
+  delay: 3,
+  messages: {
+    isFetching: false,
+    didInvalidate: false,
+    items: [],
+  },
+};
+export const initalStateUsers: StateUsers = {
+  delay: 3,
+  users: {
+    isFetching: false,
+    didInvalidate: false,
+    items: [],
+  },
+};
 
-export type Store<State = any, Action = { type: string }> = {
+const initialMessages: IThemeMessages = {
+  isFetching: false,
+  didInvalidate: false,
+  items: [],
+};
+const initialUsers: IUsers = {
+  isFetching: false,
+  didInvalidate: false,
+  items: [],
+};
+// export type Action =
+//     | {
+//         type: "getList";
+//     }
+//     | {
+//         type: "getMessage";
+//         payload: { id: number };
+//     }
+//     | {
+//         type: "sendMessage";
+//         payload: { message: string; name: string };
+//     }
+//     | {
+//         type: "getUsers";
+//     }
+//     | {
+//         type: "findMessageFromUser";
+//         payload: { name: string };
+//     }
+//     | {
+//         type: "findMessageByWord";
+//         payload: { find: string };
+//     };
+
+/*export type Store<State = any, Action = { type: string }> = {
   getState(): State;
   dispatch(action: Action): any;
   subscribe(cb: () => void): () => void;
-};
+};*/
 
-export type Reducer<State, Action> = (state: State, action: Action) => State;
+/*export type Reducer<State, Action> = (state: State, action: Action, state1:State) => State;
 
 export type Middleware<State, Action> = (
   store: Store<State, Action>,
@@ -57,110 +110,84 @@ export type ConfigureStore<State, Action> = (
   initialState?: State | undefined,
   middlewares?: Middleware<State, Action>[],
 ) => Store<State, Action>;
+*/
 
-function getId(mess: Array<Tmessage>) {
-  if (mess.length == 0) return 1;
-  return mess.reduce((ind, v) => (ind = v.id > ind ? v.id : ind), 1) + 1;
-}
-export const reducer: Reducer<State, Action> = (
-  state = { allMess: new Array<Tmessage>() },
-  action,
-) => {
+export const reducer = (state = initalState, action: actionMessage) => {
+  const nS = { ...state };
   switch (action.type) {
-    case "getList": {
-      const s: State = {
-        allMess: state.allMess,
-        messages: state.allMess,
-        users: undefined,
-        error: undefined,
-      };
-      return s;
+    case "SET_STORAGE": {
+      console.log("SET_STORAGE", action.storage!);
+      return { ...state, messageStorage: action.storage };
     }
-    case "getMessage": {
-      const id = action.payload?.id;
-      let err = undefined;
-      let retmes: Array<Tmessage> | undefined;
-      let retus: Array<string> | undefined;
-      try {
-        const m: Tmessage = state.allMess.find((val) => val["id"] === id)!;
-        retmes = [m];
-        retus = [m?.name];
-      } catch (e) {
-        if (typeof e === "string") {
-          err = e.toUpperCase(); // works, `e` narrowed to string
-        } else if (e instanceof Error) {
-          err = e.message; // works, `e` narrowed to Error
-        }
-      }
-      const s: State = {
-        allMess: state.allMess,
-        messages: retmes,
-        users: retus,
-        error: err,
-      };
-      return s;
-    }
-    case "sendMessage": {
-      const m: Tmessage = {
-        message: action.payload.message,
-        name: action.payload.name,
-        crDate: new Date(),
-        id: getId(state.allMess),
-      };
-      state.allMess.push(m);
-      const s: State = {
-        allMess: state.allMess,
-        messages: state.allMess,
-        users: undefined,
-        error: undefined,
-      };
-      return s;
-    }
-    case "getUsers": {
-      const users = state.allMess.reduce(
-        (acc, val) => acc.add(val.name),
-        new Set<string>(),
-      );
+    case "REQUEST_MESSAGE": {
+      const id = action.id ?? 0;
+      const mess = Object.assign({}, initialMessages);
+      mess.isFetching = true;
+      mess.didInvalidate = false;
 
-      const s: State = {
-        allMess: state.allMess,
-        messages: undefined,
-        users: [...users],
-        error: undefined,
-      };
-      return s;
+      return { ...state, messages: mess, selectedID: id };
     }
-    case "findMessageFromUser": {
-      const userName = action.payload.name;
-      const messages = state.allMess.filter((val) => val.name === userName);
+    case "REQUEST_MESSAGES": {
+      const theme = action.theme ?? "";
+      const mess = Object.assign({}, initialMessages);
+      mess.isFetching = true;
+      mess.didInvalidate = false;
 
-      const s: State = {
-        allMess: state.allMess,
-        messages: messages,
-        users: [userName],
-        error: undefined,
-      };
-      return s;
+      return { ...state, messages: mess, selectTheme: theme };
     }
-    case "findMessageByWord": {
-      const phrase = action.payload.find;
-      const messages = state.allMess.filter((val) =>
-        val.message.includes(phrase),
-      );
+    case "RECEIVE_MESSAGES":
+    case "RECEIVE_ERROR": {
+      const theme = action.theme ?? "";
+      const receive = action.receivedAt ?? Date.now();
+      const items = action.messages ?? [];
+      const error = action.error ?? "";
+      const mess = Object.assign({}, initialMessages, {
+        lastUpdated: receive,
+        items: items,
+        error: error,
+      });
+      mess.isFetching = false;
+      return { ...state, messages: mess, selectTheme: theme };
+    }
 
-      const s: State = {
-        allMess: state.allMess,
-        messages: messages,
-        users: undefined,
-        error: undefined,
-      };
-      return s;
-    }
+    default:
+      return state;
   }
-  return state;
 };
 
-export function configureStore(reducer: Reducer<State, Action>, state: State) {
+export const reducerUsers = (
+  state = initalStateUsers,
+  action: actionMessage,
+) => {
+  const nS = { ...state };
+  switch (action.type) {
+    case "REQUEST_USERS": {
+      const theme = action.theme ?? "";
+      const u = Object.assign({}, initialUsers);
+      u.isFetching = true;
+      return { ...state, users: u };
+    }
+    case "RECEIVE_USERS":
+    case "RECEIVE_ERROR_USER": {
+      const receive = action.receivedAt ?? Date.now();
+      const items = action.items ?? [];
+      const error = action.error ?? "";
+      const u = Object.assign({}, initialUsers, {
+        lastUpdated: receive,
+        items: items,
+        error: error,
+        isFetching: false,
+      });
+
+      return { ...state, users: u };
+    }
+
+    default:
+      return state;
+  }
+};
+
+/*export function configureStore(reducer: Reducer<State, Action>, state: State) {
   const functionsSave = new Set<Function>();
   const o = {
     getState() {
@@ -181,10 +208,23 @@ export function configureStore(reducer: Reducer<State, Action>, state: State) {
   };
   return o;
 }
-
+*/
+/*
 const store = configureStore(reducer, {
-  allMess: new Array<Tmessage>(),
+  allMess: new Array<IMessage>(),
   messages: undefined,
   users: undefined,
   error: undefined,
+});*/
+export type combineState = { message: StateMessages; users: StateUsers };
+
+export const rootReducer = combineReducers({
+  // Define a top-level state field named `todos`, handled by `todosReducer`
+  message: reducer,
+  users: reducerUsers,
+});
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({ serializableCheck: false }),
 });

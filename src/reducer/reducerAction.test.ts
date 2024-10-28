@@ -1,5 +1,5 @@
 import { configureStore, reducer, Action, Tmessage } from "./reducer";
-describe("reducer", () => {
+describe.skip("reducer", () => {
   describe("public interface", () => {
     it("is a function", () => {
       expect(reducer).toBeInstanceOf(Function);

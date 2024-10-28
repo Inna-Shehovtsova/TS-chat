@@ -1,73 +1,84 @@
-import { configureStore } from "./reducer";
+import { rootReducer, StateMessages, StateUsers } from "./reducer";
+import { configureStore, Dispatch } from "@reduxjs/toolkit";
+import { MockStorage } from "./mockStorage";
+import {
+  requestUser,
+  requestMessages,
+  receiveMessages,
+  receiveUser,
+  asyncGet,
+  setStorage,
+} from "./Action";
+import { emptyMessage, IMessage } from "./iMessage";
 
+const messStorage = new MockStorage();
 describe("configureStore", () => {
   describe("public interface", () => {
-    it("is a function", () => {
+    it("is a function", async () => {
       expect(configureStore).toBeInstanceOf(Function);
-    });
-    it("generates store with reducer", () => {
-      const state = 2;
-      const store = configureStore(() => state);
-      expect(store.getState).toBeInstanceOf(Function);
-
-      expect(store.dispatch).toBeInstanceOf(Function);
-
-      expect(store.subscribe).toBeInstanceOf(Function);
-      expect(store.subscribe(jest.fn())).toBeInstanceOf(Function);
+      expect(MockStorage).toBeInstanceOf(Function);
+      const a = await messStorage.read();
+      expect(a.length).toBe(0);
     });
   });
 
   describe("functional interface", () => {
     it("returns state based on initial state", () => {
-      const state = { name: "Bob" };
-      expect(configureStore(() => null).getState()).toBe(undefined);
-      expect(configureStore(() => null, state).getState()).toBe(state);
-    });
+      const store1 = configureStore({
+        reducer: rootReducer,
+        middleware: (getDefaultMiddleware) =>
+          getDefaultMiddleware({ serializableCheck: false }),
+      });
 
-    it("calculates new state with reducer call", () => {
-      const action1 = { type: "xxx" };
-      const action2 = { type: "yyyy" };
-      const reducer = jest.fn((state = 1) => state + 1);
-      const store = configureStore(reducer);
-      store.dispatch(action1);
-      expect(reducer).toHaveBeenCalledWith(undefined, action1);
-      expect(store.getState()).toBe(2);
-      store.dispatch(action2);
-      expect(reducer).toHaveBeenCalledWith(2, action2);
-      expect(store.getState()).toBe(3);
-    });
-
-    it("notifies listeners about updates", () => {
-      const action1 = { type: "xxx" };
-      const action2 = { type: "yyyy" };
-      const reducer = jest.fn((state = 1) => state + 1);
-      const store = configureStore(reducer);
-      const spy = jest.fn();
-      store.subscribe(spy);
-      expect(spy).not.toHaveBeenCalled();
-      store.dispatch(action1);
-      expect(spy).toHaveBeenCalled();
-      store.dispatch(action2);
-      expect(spy).toHaveBeenCalledTimes(2);
-    });
-
-    it("allows to unsubscribe from the events", () => {
-      const action1 = { type: "xxx" };
-      const action2 = { type: "yyyy" };
-      const reducer = jest.fn((state = 1) => state + 1);
-      const store = configureStore(reducer);
-      const spy = jest.fn();
-      const unsubscribe = store.subscribe(spy);
-      expect(spy).not.toHaveBeenCalled();
-      store.dispatch(action1);
-      expect(spy).toHaveBeenCalled();
-      unsubscribe();
-      store.dispatch(action2);
-      expect(spy).toHaveBeenCalledTimes(1);
+      let state = store1.getState();
+      expect(state.message.delay).toEqual(3);
+      store1.dispatch(setStorage(messStorage));
+      state = store1.getState();
+      expect(state.message.messageStorage).toBeInstanceOf(MockStorage);
     });
   });
+  describe("functional interface", () => {
+    it("message list", async () => {
+      const store1 = configureStore({
+        reducer: rootReducer,
+        middleware: (getDefaultMiddleware) =>
+          getDefaultMiddleware({ serializableCheck: false }),
+      });
+      store1.dispatch(requestMessages(""));
 
-  describe("middlewares", () => {
-    // put your tests here
+      const state = store1.getState();
+      expect(state.message.messages.isFetching).toBeTruthy();
+      expect(state.message.messages.items.length).toBe(0);
+      const c = new Array<IMessage>();
+      c.push({ ...emptyMessage, name: "test", message: "Hello!", id: 1 });
+
+      store1.dispatch(receiveMessages("", c));
+
+      const state2 = store1.getState();
+      expect(state2.message.messages.isFetching).toBeFalsy();
+      expect(state2.message.messages.items.length).toBe(1);
+      expect(state2.message.messages.items[0].name).toStrictEqual("test");
+      store1.dispatch(setStorage(messStorage));
+    });
+  });
+  describe("functional interface", () => {
+    it("users list", () => {
+      const store1 = configureStore({ reducer: rootReducer });
+      store1.dispatch(requestUser());
+
+      const state = store1.getState();
+      expect(state.users.users.isFetching).toBeTruthy();
+      expect(state.users.users.items.length).toBe(0);
+      const c = new Array<string>();
+      c.push("test");
+
+      store1.dispatch(receiveUser(c));
+
+      const state2 = store1.getState();
+      console.log(state2);
+      expect(state2.users.users.isFetching).toBeFalsy();
+      expect(state2.users.users.items.length).toBe(1);
+      expect(state2.users.users.items[0]).toStrictEqual("test");
+    });
   });
 });
