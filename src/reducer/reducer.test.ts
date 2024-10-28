@@ -6,10 +6,8 @@ import {
   requestMessages,
   receiveMessages,
   receiveUser,
-  asyncGet,
   setStorage,
-  sendMessages,
-  sendMessage,
+  sendOneMessage,
   typeMessage,
   requestMessage,
 } from "./Action";
@@ -54,7 +52,7 @@ describe("configureStore", () => {
       expect(state.message.messages.isFetching).toBeTruthy();
       expect(state.message.messages.items.length).toBe(0);
       const c = new Array<IMessage>();
-      c.push({ ...emptyMessage, name: "test", message: "Hello!", id: 1 });
+      c.push({ ...emptyMessage, name: "test", message: "Hello!" });
 
       store1.dispatch(receiveMessages("", c));
 
@@ -67,17 +65,15 @@ describe("configureStore", () => {
           ...emptyMessage,
           name: "test2",
           message: "Hello!",
-          id: 2,
         }),
       );
       const state3 = store1.getState();
       expect(state3.message.messageSend?.isSend).toBeFalsy();
       store1.dispatch(
-        sendMessage({
+        sendOneMessage({
           ...emptyMessage,
           name: "test2",
           message: "Hello!",
-          id: 2,
         }),
       );
       const state4 = store1.getState();
