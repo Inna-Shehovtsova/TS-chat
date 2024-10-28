@@ -13,6 +13,14 @@ import { IMessage } from "./reducer/iMessage";
 
 //const el = document.getElementById("app") as HTMLElement;
 const el = document.querySelector("#app") as HTMLElement;
+el.innerHTML = `
+     <input class="text_input" value="message text"></input>
+    <input class="text_name" value="name"></input>
+    <p><button class="send">Send message</button></p>
+    <p class="attention"></p>
+    <p class="theme"></p>
+    <h1 style="color: red" class="error"></h1>
+    <ul class="messages"></ul>`;
 const elUsers = document.querySelector("#users") as HTMLElement;
 const store = configureStore({
   reducer: rootReducer,
@@ -62,15 +70,9 @@ function shouldBrowseMessages(getState: any, theme: string) {
   const state = getState();
   const timestampnow = Date.now() + state.message.delay;
   const selectedTheme = theme === (state.message.selectedTheme ?? "");
-  let invalidate = state.message.messages.didInvalidate;
-  let lastUpdTime = state.message.messages.lastUpdated ?? 0;
-  if (!selectedTheme) {
-    return true;
-  }
-  if (selectedTheme) {
-    lastUpdTime = state.message.messages.lastUpdated ?? 0;
-    invalidate = state.message.messages.didInvalidate;
-  }
+  const invalidate = state.message.messages.didInvalidate;
+  const lastUpdTime = state.message.messages.lastUpdated ?? 0;
+
   if (timestampnow > lastUpdTime) {
     return true;
   }
@@ -78,6 +80,7 @@ function shouldBrowseMessages(getState: any, theme: string) {
 }
 
 export function browseAllMessagesIfNeeded() {
+  console.log("browseAllMessagesIfNeeded");
   return (dispatch: any, state: any) => {
     if (shouldBrowseMessages(state, "")) {
       return dispatch(asyncGet());
@@ -85,15 +88,13 @@ export function browseAllMessagesIfNeeded() {
   };
 }
 async function loadData() {
-  console.log("load data");
   store.dispatch(asyncGet());
-  console.log("load data2");
 }
 
 async function send() {
   const text = document.querySelector(".text_input") as HTMLInputElement;
   const name = document.querySelector(".text_name") as HTMLInputElement;
-  console.log("load data");
+
   const mess: IMessage = {
     message: text.value,
     name: name.value,
@@ -101,7 +102,6 @@ async function send() {
   };
 
   store.dispatch(asyncSend(mess));
-  console.log("load data2");
 }
 type RenderMessages = {
   isLoading: boolean;
@@ -112,14 +112,7 @@ type RenderMessages = {
 };
 const render = (props: RenderMessages) => {
   console.log("render", props);
-  el.innerHTML = `<p><button class="load">Load data</button></p>
-     <input class="text_input" value="message text"></input>
-    <input class="text_name" value="name"></input>
-    <p><button class="send">Send message</button></p>
-      
-    <p class="theme"></p>
-    <h1 style="color: red" class="error"></h1>
-    <ul class="messages"></ul>`;
+
   if (props.isSended) {
     const t = el.querySelector(".send");
     t?.classList.add("hide");
@@ -128,8 +121,11 @@ const render = (props: RenderMessages) => {
     t?.classList.remove("hide");
   }
   if (props.isLoading) {
-    const t = el.querySelector("ul");
-    if (t) t.innerHTML = "Messages is not loaded yet";
+    const t = el.querySelector(".attention");
+    if (t) t.innerHTML = "Messages is loading";
+  } else {
+    const t = el.querySelector(".attention");
+    if (t) t.innerHTML = "";
   }
   if (props.theme) {
     const t = el.querySelector(".theme");
@@ -151,8 +147,6 @@ const render = (props: RenderMessages) => {
       if (t) t.appendChild(messEl);
     }
   }
-
-  el.querySelector(".load")?.addEventListener("click", loadData);
 
   el.querySelector(".send")?.addEventListener("click", send);
 };
@@ -178,7 +172,6 @@ const renderUsers = (props: RenderUsers) => {
     const t = elUsers.querySelector(".usersL");
 
     for (let i = 0; i < props.data.length; i++) {
-      console.log(props.data[i]);
       const messEl = document.createElement("li");
       messEl.innerHTML = `<p class="username">${props.data[i]}</p>`;
       if (t) t.appendChild(messEl);
@@ -198,8 +191,19 @@ const selectData = (state: any): RenderMessages => ({
   isSended: false,
 });
 
+function checkMessage() {
+  let intervalId = null;
+  // check if an interval has already been set up
+  if (!intervalId) {
+    intervalId = setInterval(
+      () => store.dispatch(browseAllMessagesIfNeeded()),
+      3000,
+    );
+  }
+}
 render(selectData(store.getState()));
 renderUsers(selectUsersData(store.getState()));
-store.dispatch(browseAllMessagesIfNeeded());
+
 store.subscribe(() => render(selectData(store.getState())));
 store.subscribe(() => renderUsers(selectUsersData(store.getState())));
+checkMessage();
