@@ -18,7 +18,7 @@ body {
   border-color: burlywood;
 }
 .right {
-  width: 40px;
+  width: 100px;
 }
 .left {
   width: 40px;
@@ -53,4 +53,33 @@ h1 {
   text-align: center;
   font-family: "Courier New", Courier, monospace;
   color: rgb(185, 176, 123);
+}
+.username {
+  font-family: "Courier New", Courier, monospace;
+  color: rgb(126, 120, 83);
+  font-size: small;
+}
+.text {
+  font-family: "Courier New", Courier, monospace;
+  color: black;
+  font-size: medium;
+}
+.time {
+  font-family: "Courier New", Courier, monospace;
+  color: rgb(35, 33, 22);
+  font-size: small;
+}
+.usersL {
+  color: rgb(241, 235, 204);
+}
+.text_input {
+  width: 200px;
+  padding: 20px;
+  margin: 10px;
+}
+.text_name {
+  width: 100px;
+  height: 20px;
+  padding: 20px;
+  margin: 10px;
 }

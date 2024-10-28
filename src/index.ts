@@ -14,8 +14,9 @@ import { IMessage } from "./reducer/iMessage";
 //const el = document.getElementById("app") as HTMLElement;
 const el = document.querySelector("#app") as HTMLElement;
 el.innerHTML = `
-     <input class="text_input" value="message text"></input>
-    <input class="text_name" value="name"></input>
+    <p><input class="text_name" value="name"></input></p>
+    <p><input class="text_input" value="message text"></input></p>
+    
     <p><button class="send">Send message</button></p>
     <p class="attention"></p>
     <p class="theme"></p>
