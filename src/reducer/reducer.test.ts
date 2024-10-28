@@ -8,6 +8,10 @@ import {
   receiveUser,
   asyncGet,
   setStorage,
+  sendMessages,
+  sendMessage,
+  typeMessage,
+  requestMessage,
 } from "./Action";
 import { emptyMessage, IMessage } from "./iMessage";
 
@@ -58,7 +62,29 @@ describe("configureStore", () => {
       expect(state2.message.messages.isFetching).toBeFalsy();
       expect(state2.message.messages.items.length).toBe(1);
       expect(state2.message.messages.items[0].name).toStrictEqual("test");
-      store1.dispatch(setStorage(messStorage));
+      store1.dispatch(
+        typeMessage({
+          ...emptyMessage,
+          name: "test2",
+          message: "Hello!",
+          id: 2,
+        }),
+      );
+      const state3 = store1.getState();
+      expect(state3.message.messageSend?.isSend).toBeFalsy();
+      store1.dispatch(
+        sendMessage({
+          ...emptyMessage,
+          name: "test2",
+          message: "Hello!",
+          id: 2,
+        }),
+      );
+      const state4 = store1.getState();
+      expect(state4.message.messageSend?.isSend).toBeTruthy();
+      store1.dispatch(requestMessage(1));
+      const state5 = store1.getState();
+      expect(state5.message.selectedID).toBe(1);
     });
   });
   describe("functional interface", () => {
@@ -75,7 +101,7 @@ describe("configureStore", () => {
       store1.dispatch(receiveUser(c));
 
       const state2 = store1.getState();
-      console.log(state2);
+      //console.log(state2);
       expect(state2.users.users.isFetching).toBeFalsy();
       expect(state2.users.users.items.length).toBe(1);
       expect(state2.users.users.items[0]).toStrictEqual("test");

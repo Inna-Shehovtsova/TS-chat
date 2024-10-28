@@ -1,6 +1,11 @@
 import { IMessage, IMessageFunctions } from "./iMessage";
 import { MessageFirebase } from "./messageFirebase";
-import { combineState, StateMessages, StateUsers } from "./reducer";
+import {
+  combineState,
+  ISendMessage,
+  StateMessages,
+  StateUsers,
+} from "./reducer";
 import { Action, Dispatch } from "redux";
 export const REQUEST_MESSAGES = "REQUEST_MESSAGES";
 export const REQUEST_MESSAGE = "REQUEST_MESSAGE";
@@ -9,6 +14,7 @@ export const SELECT_THEME = "SELECT_THEME";
 export const REQUEST_USERS = "REQUEST_USERS";
 export const RECEIVE_USERS = "RECEIVE_USERS";
 export const SEND_MESSAGE = "SEND_MESSAGE";
+export const TYPE_MESSAGE = "TYPE_MESSAGE";
 export const RECEIVE_ERROR = "RECEIVE_ERROR";
 export const RECEIVE_ERROR_USER = "RECEIVE_ERROR_USER";
 export const SET_STORAGE = "SET_STORAGE";
@@ -22,6 +28,7 @@ export interface actionMessage extends Action {
   receivedAt?: number;
   items?: Array<string>;
   storage?: IMessageFunctions;
+  message?: IMessage;
 }
 export function selectTheme(theme: string) {
   return {
@@ -64,6 +71,21 @@ export function receiveMessages(theme: any, messages: Array<IMessage>) {
     receivedAt: Date.now(),
   };
 }
+export function sendMessage(message: IMessage) {
+  return {
+    type: SEND_MESSAGE,
+
+    message,
+  };
+}
+
+export function typeMessage(message: IMessage) {
+  return {
+    type: TYPE_MESSAGE,
+
+    message,
+  };
+}
 export function receiveError(error: string) {
   return {
     type: RECEIVE_ERROR,
@@ -85,64 +107,45 @@ export function setStorage(storage: IMessageFunctions) {
   };
 }
 
-export const a1 = () => (dispatch: Dispatch, getState: () => combineState) => {
-  const theme = getState().message.selectedTheme ?? "";
-  const messageStorage = getState().message.messageStorage!;
-  dispatch(requestMessages(theme));
-  if (theme.trim() === "")
-    return messageStorage.read().then(
-      (mesAr: IMessage[]) => dispatch(receiveMessages(theme, mesAr)),
-      (error) => dispatch(receiveError(error)),
-    );
-  else {
-    return messageStorage
-      .getDesk(theme)
-      .then()
-      .then(
-        (mesAr: IMessage[]) => dispatch(receiveMessages(theme, mesAr)),
-        (error) => dispatch(receiveError(error)),
-      );
-  }
-};
-
 export function asyncGet() {
   return (dispatch: Dispatch, getState: any) => {
     dispatch(requestMessages(""));
+    console.log("request messate");
     getState()
       .message.messageStorage!.read()
-      .then((mesAr: IMessage[]) => dispatch(receiveMessages("", mesAr)));
+      .then((mesAr: IMessage[]) => {
+        console.log("before");
+        dispatch(receiveMessages("", mesAr));
+        console.log("after");
+      });
   };
 }
 
-export function asyncGetMessages(
-  theme: string,
-  messageStorage: IMessageFunctions,
-) {
-  return () => (dispatch: (action: Action) => void) => {
+export function asyncGetMessages(theme: string) {
+  return (dispatch: Dispatch, getState: any) => {
     dispatch(requestMessages(theme));
-    if (theme.trim() === "")
-      messageStorage.read().then(
-        (mesAr: IMessage[]) => dispatch(receiveMessages(theme, mesAr)),
-        (error) => dispatch(receiveError(error)),
-      );
-    else {
-      messageStorage.getDesk(theme).then(
-        (mesAr: IMessage[]) => dispatch(receiveMessages(theme, mesAr)),
-        (error) => dispatch(receiveError(error)),
-      );
-    }
+    console.log("request messate");
+    getState()
+      .messageStorage.getDesk(theme)
+      .then((mesAr: IMessage[]) => {
+        console.log("before");
+        dispatch(receiveMessages(theme, mesAr));
+        console.log("after");
+      });
   };
 }
-export function asyncGetOne(id: number) {
-  return (dispatch: any, getState: any) => {
-    dispatch(requestMessage(id));
 
-    messageStorage
-      .getByFilter((el) => el.id == id)
-      .then(
-        (mesAr: IMessage[]) => dispatch(receiveMessages("", mesAr)),
-        (error) => dispatch(receiveError(error)),
-      );
+export function asyncSend(mess: IMessage) {
+  return (dispatch: Dispatch, getState: any) => {
+    dispatch(typeMessage(mess));
+    console.log("type messate");
+    getState()
+      .message.messageStorage!.writeOne(mess)
+      .then(() => {
+        console.log("before send");
+        dispatch(sendMessage(mess));
+        console.log("after send");
+      });
   };
 }
 
@@ -166,6 +169,14 @@ function shouldBrowseMessages(state: StateMessages, theme: string) {
 export function browseMessagesIfNeeded(theme: string) {
   return (dispatch: any, state: any) => {
     if (shouldBrowseMessages(state, theme)) {
+      return dispatch(asyncGetMessages(theme));
+    }
+  };
+}
+
+export function browseAllMessagesIfNeeded() {
+  return (dispatch: any, state: any) => {
+    if (shouldBrowseMessages(state, "")) {
       return dispatch(asyncGet());
     }
   };

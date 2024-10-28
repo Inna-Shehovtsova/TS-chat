@@ -4,7 +4,7 @@
 //получение списка пользователей
 //поиск по чату
 import { combineReducers, configureStore, Dispatch } from "@reduxjs/toolkit";
-import { IMessage, IMessageFunctions } from "./iMessage";
+import { emptyMessage, IMessage, IMessageFunctions } from "./iMessage";
 import { actionMessage, selectTheme } from "./Action";
 import { initFirestore, MessageFirebase } from "./messageFirebase";
 
@@ -69,48 +69,6 @@ const initialUsers: IUsers = {
   didInvalidate: false,
   items: [],
 };
-// export type Action =
-//     | {
-//         type: "getList";
-//     }
-//     | {
-//         type: "getMessage";
-//         payload: { id: number };
-//     }
-//     | {
-//         type: "sendMessage";
-//         payload: { message: string; name: string };
-//     }
-//     | {
-//         type: "getUsers";
-//     }
-//     | {
-//         type: "findMessageFromUser";
-//         payload: { name: string };
-//     }
-//     | {
-//         type: "findMessageByWord";
-//         payload: { find: string };
-//     };
-
-/*export type Store<State = any, Action = { type: string }> = {
-  getState(): State;
-  dispatch(action: Action): any;
-  subscribe(cb: () => void): () => void;
-};*/
-
-/*export type Reducer<State, Action> = (state: State, action: Action, state1:State) => State;
-
-export type Middleware<State, Action> = (
-  store: Store<State, Action>,
-) => (next: (action: Action) => any) => (action: Action) => any;
-
-export type ConfigureStore<State, Action> = (
-  reducer: Reducer<State, Action>,
-  initialState?: State | undefined,
-  middlewares?: Middleware<State, Action>[],
-) => Store<State, Action>;
-*/
 
 export const reducer = (state = initalState, action: actionMessage) => {
   const nS = { ...state };
@@ -127,7 +85,18 @@ export const reducer = (state = initalState, action: actionMessage) => {
 
       return { ...state, messages: mess, selectedID: id };
     }
+    case "TYPE_MESSAGE": {
+      const mess = action.message ?? emptyMessage;
+      const ms: ISendMessage = { isSend: false, message: mess, error: "" };
+      return { ...state, messageSend: ms };
+    }
+    case "SEND_MESSAGE": {
+      const mess = action.message ?? emptyMessage;
+      const ms: ISendMessage = { isSend: true, message: mess, error: "" };
+      return { ...state, messageSend: ms };
+    }
     case "REQUEST_MESSAGES": {
+      console.log("REQUEST_MESSAGES");
       const theme = action.theme ?? "";
       const mess = Object.assign({}, initialMessages);
       mess.isFetching = true;
@@ -137,17 +106,19 @@ export const reducer = (state = initalState, action: actionMessage) => {
     }
     case "RECEIVE_MESSAGES":
     case "RECEIVE_ERROR": {
+      console.log("RECEIVE_MESSAGES");
       const theme = action.theme ?? "";
       const receive = action.receivedAt ?? Date.now();
       const items = action.messages ?? [];
       const error = action.error ?? "";
+      const id = action.id;
       const mess = Object.assign({}, initialMessages, {
         lastUpdated: receive,
         items: items,
         error: error,
       });
       mess.isFetching = false;
-      return { ...state, messages: mess, selectTheme: theme };
+      return { ...state, messages: mess, selectTheme: theme, selectedID: id };
     }
 
     default:
