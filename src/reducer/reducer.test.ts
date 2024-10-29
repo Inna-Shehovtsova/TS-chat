@@ -8,8 +8,8 @@ import {
   receiveUser,
   setStorage,
   sendOneMessage,
-  typeMessage,
   requestMessage,
+  endTypeMessage,
 } from "./Action";
 import { emptyMessage, IMessage } from "./iMessage";
 
@@ -61,7 +61,7 @@ describe("configureStore", () => {
       expect(state2.message.messages.items.length).toBe(1);
       expect(state2.message.messages.items[0].name).toStrictEqual("test");
       store1.dispatch(
-        typeMessage({
+        endTypeMessage({
           ...emptyMessage,
           name: "test2",
           message: "Hello!",

@@ -32,7 +32,6 @@ export interface actionMessage extends Action {
   items?: Array<string>;
   storage?: IMessageFunctions;
   message?: IMessage;
-  newM?: Array<IMessage>;
 }
 export function selectTheme(theme: string) {
   return {
@@ -67,17 +66,12 @@ export function requestMessage(id: number) {
   };
 }
 
-export function receiveMessages(
-  theme: any,
-  messages: Array<IMessage>,
-  newM: Array<IMessage>,
-) {
+export function receiveMessages(theme: any, messages: Array<IMessage>) {
   return {
     type: RECEIVE_MESSAGES,
     theme,
     messages: messages,
     receivedAt: Date.now(),
-    newM,
   };
 }
 export function sendOneMessage(message: IMessage) {
