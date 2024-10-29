@@ -193,6 +193,8 @@ const render = (props: RenderMessages) => {
   if (props.text) {
     if (props.text.isTyping) {
       console.log("is typing");
+      const t = document.querySelector(".text_name") as HTMLInputElement;
+      t.value = props.text.message.name;
       const text = document.querySelector(".text_input") as HTMLInputElement;
       text.value = props.text.message.message;
       const t1 = el.querySelector(".send") as HTMLButtonElement;
