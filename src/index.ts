@@ -1,23 +1,43 @@
 // import "./style/style.css";
-import { StateMessages, combineState, rootReducer } from "./reducer/reducer";
+import {
+  ISendMessage,
+  StateMessages,
+  combineState,
+  rootReducer,
+} from "./reducer/reducer";
 import { combineReducers, configureStore, Dispatch } from "@reduxjs/toolkit";
 import { getMessagesList, sendMessage } from "./reducer/messagesApi";
 import {
+  applySmile,
+  BEGIN_SEND_MESSAGE,
+  beginTypeMessage,
+  endTypeMessage,
   receiveMessages,
   receiveUser,
   requestMessages,
   sendOneMessage,
   typeMessage,
 } from "./reducer/Action";
+import { smileCollection } from "./reducer/smileCollection";
 import { IMessage } from "./reducer/iMessage";
 
+function renderSmileTable() {
+  const sm = document.querySelector(".left") as HTMLElement;
+  let innerTable = "<tr><th>Вид</th></tr>";
+  for (const v of smileCollection) {
+    innerTable += `<tr><td class="tsmile" my_data_smile=${v.html}>${v.html}</td></tr>`;
+  }
+  sm.innerHTML = `<table class="tsmile">${innerTable}</table>`;
+}
+renderSmileTable();
 //const el = document.getElementById("app") as HTMLElement;
 const el = document.querySelector("#app") as HTMLElement;
 el.innerHTML = `
-    <p><input class="text_name" value="name"></input></p>
+    <div class="message"><input class="text_name" value="name"></input></p>
     <p><input class="text_input" value="message text"></input></p>
     
     <p><button class="send">Send message</button></p>
+    
     <p class="attention"></p>
     <p class="theme"></p>
     <h1 style="color: red" class="error"></h1>
@@ -34,14 +54,42 @@ export function asyncGet() {
     dispatch(requestMessages(""));
     console.log("request messate");
     getMessagesList().then((mesAr: IMessage[]) => {
+      const state = getState();
+
       console.log("before");
-      const m = mesAr.sort((a, b) =>
+      const date1 = new Date(2024, 0, 0);
+      const a1 = mesAr.filter((val) => {
+        if (val.date) {
+          return val.date > date1;
+        }
+        return false;
+      });
+      const m = a1.sort((a, b) =>
         b.date!.valueOf() > a.date!.valueOf() ? 1 : -1,
       );
-      dispatch(receiveMessages("", m));
+      const newMessage = new Array<IMessage>();
+      console.log(
+        "state.message.messages.items.length ",
+        state.message.messages.items.length,
+      );
+      if (state.message.messages.items.length > 0) {
+        const firsel = state.message.messages.items[0];
+        const index = m.findIndex(
+          (val) =>
+            val.message === firsel.message &&
+            val.name === firsel.name &&
+            val.now === firsel.now,
+        );
+        const m1 = m.filter((val, i) => i < index);
+        console.log("m1, m1");
+        dispatch(receiveMessages("", m, m1));
+      } else {
+        console.log("m, m");
+        dispatch(receiveMessages("", m, m));
+      }
 
       const u = new Array<string>();
-      mesAr.forEach((val) => {
+      m.forEach((val) => {
         if (val.name) u.push(val.name.trim());
       });
       const set = new Set(u);
@@ -57,7 +105,7 @@ export function asyncGet() {
 
 export function asyncSend(mess: IMessage) {
   return (dispatch: Dispatch, getState: any) => {
-    dispatch(typeMessage(mess));
+    dispatch(endTypeMessage(mess));
     console.log("type messate");
     sendMessage(mess).then(() => {
       console.log("before send");
@@ -84,6 +132,7 @@ export function browseAllMessagesIfNeeded() {
   console.log("browseAllMessagesIfNeeded");
   return (dispatch: any, state: any) => {
     if (shouldBrowseMessages(state, "")) {
+      console.log("need update");
       return dispatch(asyncGet());
     }
   };
@@ -91,8 +140,40 @@ export function browseAllMessagesIfNeeded() {
 async function loadData() {
   store.dispatch(asyncGet());
 }
+function applySmileInput(e: Event) {
+  console.log("in applySmileInput ");
+
+  const smile = e.target as HTMLElement;
+  let st = "";
+  if (smile.hasAttribute("my_data_smile")) {
+    st = smile.getAttribute("my_data_smile") ?? "";
+  }
+  console.log(smile);
+  console.log(st);
+  const text = document.querySelector(".text_input") as HTMLInputElement;
+  const name = document.querySelector(".text_name") as HTMLInputElement;
+  const mess: IMessage = {
+    message: text.value + st,
+    name: name.value,
+    now: Date.now(),
+  };
+  console.log(text);
+  store.dispatch(beginTypeMessage(mess));
+}
+function typing() {
+  const text = document.querySelector(".text_input") as HTMLInputElement;
+  const name = document.querySelector(".text_name") as HTMLInputElement;
+  const mess: IMessage = {
+    message: text.value,
+    name: name.value,
+    now: Date.now(),
+  };
+  console.log("typing");
+  store.dispatch(beginTypeMessage(mess));
+}
 
 async function send() {
+  console.log("send");
   const text = document.querySelector(".text_input") as HTMLInputElement;
   const name = document.querySelector(".text_name") as HTMLInputElement;
 
@@ -110,17 +191,11 @@ type RenderMessages = {
   error: string | undefined;
   theme: string | undefined;
   isSended: boolean;
+  text: ISendMessage | undefined;
 };
 const render = (props: RenderMessages) => {
   console.log("render", props);
 
-  if (props.isSended) {
-    const t = el.querySelector(".send");
-    t?.classList.add("hide");
-  } else {
-    const t = el.querySelector(".send");
-    t?.classList.remove("hide");
-  }
   if (props.isLoading) {
     const t = el.querySelector(".attention");
     if (t) t.innerHTML = "Messages is loading";
@@ -138,6 +213,7 @@ const render = (props: RenderMessages) => {
   }
   if (props.data.length > 0) {
     const t = el.querySelector(".messages");
+    if (t) t.innerHTML = "";
 
     for (let i = 0; i < props.data.length; i++) {
       const m: IMessage = { ...props.data[i] };
@@ -145,11 +221,39 @@ const render = (props: RenderMessages) => {
       messEl.innerHTML = `<p class="username">${m.name}</p>
                         <p class="text">${m.message}</p>
                         <p class="time">${m.date?.toDateString()}</p>`;
-      if (t) t.appendChild(messEl);
+      if (t) t.insertAdjacentElement("beforeend", messEl);
     }
   }
+  if (props.text) {
+    if (props.text.isTyping) {
+      console.log("is typing");
+      const text = document.querySelector(".text_input") as HTMLInputElement;
+      text.value = props.text.message.message;
+      const t1 = el.querySelector(".send") as HTMLButtonElement;
+      t1.disabled = false;
+    } else {
+      if (!props.text.isTyping && !props.text.isSend) {
+        console.log("end typing");
+        const t = el.querySelector(".send") as HTMLButtonElement;
+        t.disabled = true;
+      } else {
+        console.log("end send");
+        let t = document.querySelector(".text_input") as HTMLInputElement;
+        t.value = "";
+        t = document.querySelector(".text_name") as HTMLInputElement;
+        t.value = "";
+        const t1 = el.querySelector(".send") as HTMLButtonElement;
+        t1.disabled = false;
+      }
+    }
+  } else {
+    const t1 = el.querySelector(".send") as HTMLButtonElement;
+    t1.disabled = false;
+  }
+  el.querySelector(".text_input")?.addEventListener("input", typing);
 
   el.querySelector(".send")?.addEventListener("click", send);
+  document.querySelector(".tsmile")?.addEventListener("click", applySmileInput);
 };
 
 type RenderUsers = {
@@ -186,10 +290,11 @@ const renderUsers = (props: RenderUsers) => {
 
 const selectData = (state: any): RenderMessages => ({
   isLoading: state.message.messages.isFetching,
-  data: state.message.messages.items,
+  data: state.message.messages.items.slice(0, 20),
   error: state.message.messages.error,
   theme: state.message.selectedTheme,
-  isSended: false,
+  isSended: state.message.isSend,
+  text: state.message.messageSend,
 });
 
 function checkMessage() {

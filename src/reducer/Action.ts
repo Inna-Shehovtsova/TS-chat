@@ -13,11 +13,14 @@ export const RECEIVE_MESSAGES = "RECEIVE_MESSAGES";
 export const SELECT_THEME = "SELECT_THEME";
 export const REQUEST_USERS = "REQUEST_USERS";
 export const RECEIVE_USERS = "RECEIVE_USERS";
-export const SEND_MESSAGE = "SEND_MESSAGE";
-export const TYPE_MESSAGE = "TYPE_MESSAGE";
+export const BEGIN_SEND_MESSAGE = "BEGIN_SEND_MESSAGE";
+export const BEGIN_TYPE_MESSAGE = "BEGIN_TYPE_MESSAGE";
+export const END_SEND_MESSAGE = "END_SEND_MESSAGE";
+export const END_TYPE_MESSAGE = "END_TYPE_MESSAGE";
 export const RECEIVE_ERROR = "RECEIVE_ERROR";
 export const RECEIVE_ERROR_USER = "RECEIVE_ERROR_USER";
 export const SET_STORAGE = "SET_STORAGE";
+export const APPLY_SMILE = "APPLY_SMILE";
 
 export interface actionMessage extends Action {
   type: string;
@@ -29,6 +32,7 @@ export interface actionMessage extends Action {
   items?: Array<string>;
   storage?: IMessageFunctions;
   message?: IMessage;
+  newM?: Array<IMessage>;
 }
 export function selectTheme(theme: string) {
   return {
@@ -63,25 +67,37 @@ export function requestMessage(id: number) {
   };
 }
 
-export function receiveMessages(theme: any, messages: Array<IMessage>) {
+export function receiveMessages(
+  theme: any,
+  messages: Array<IMessage>,
+  newM: Array<IMessage>,
+) {
   return {
     type: RECEIVE_MESSAGES,
     theme,
     messages: messages,
     receivedAt: Date.now(),
+    newM,
   };
 }
 export function sendOneMessage(message: IMessage) {
   return {
-    type: SEND_MESSAGE,
+    type: END_SEND_MESSAGE,
 
     message,
   };
 }
 
-export function typeMessage(message: IMessage) {
+export function beginTypeMessage(message: IMessage) {
   return {
-    type: TYPE_MESSAGE,
+    type: BEGIN_TYPE_MESSAGE,
+
+    message,
+  };
+}
+export function endTypeMessage(message: IMessage) {
+  return {
+    type: END_TYPE_MESSAGE,
 
     message,
   };
@@ -104,5 +120,11 @@ export function setStorage(storage: IMessageFunctions) {
   return {
     type: SET_STORAGE,
     storage,
+  };
+}
+export function applySmile(message: IMessage) {
+  return {
+    type: APPLY_SMILE,
+    message,
   };
 }

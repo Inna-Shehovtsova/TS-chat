@@ -5,7 +5,15 @@
 //поиск по чату
 import { combineReducers, configureStore, Dispatch } from "@reduxjs/toolkit";
 import { emptyMessage, IMessage, IMessageFunctions } from "./iMessage";
-import { actionMessage, selectTheme } from "./Action";
+import {
+  actionMessage,
+  BEGIN_SEND_MESSAGE,
+  BEGIN_TYPE_MESSAGE,
+  END_SEND_MESSAGE,
+  END_TYPE_MESSAGE,
+  selectTheme,
+} from "./Action";
+import { smileInText } from "./smileCollection";
 
 export interface IThemeMessages {
   isFetching: boolean;
@@ -24,6 +32,7 @@ export interface IUsers {
 export interface ISendMessage {
   message: IMessage;
   isSend: boolean;
+  isTyping: boolean;
   error?: string;
 }
 
@@ -34,6 +43,7 @@ export type StateMessages = {
   messageSend?: ISendMessage;
   messageStorage?: IMessageFunctions;
   delay: number;
+  isSend: boolean;
 };
 export type StateUsers = {
   users: IUsers;
@@ -48,6 +58,7 @@ export const initalState: StateMessages = {
     didInvalidate: false,
     items: [],
   },
+  isSend: true,
 };
 export const initalStateUsers: StateUsers = {
   delay: 3,
@@ -73,7 +84,7 @@ export const reducer = (state = initalState, action: actionMessage) => {
   const nS = { ...state };
   switch (action.type) {
     case "SET_STORAGE": {
-      console.log("SET_STORAGE", action.storage!);
+      //console.log("SET_STORAGE", action.storage!);
       return { ...state, messageStorage: action.storage };
     }
     case "REQUEST_MESSAGE": {
@@ -84,20 +95,41 @@ export const reducer = (state = initalState, action: actionMessage) => {
 
       return { ...state, messages: mess, selectedID: id };
     }
-    case "TYPE_MESSAGE": {
+    case BEGIN_TYPE_MESSAGE: {
       const mess = action.message ?? emptyMessage;
-      const ms: ISendMessage = { isSend: false, message: mess, error: "" };
-      return { ...state, messageSend: ms };
+      const ms: ISendMessage = {
+        isSend: false,
+        message: mess,
+        error: "",
+        isTyping: true,
+      };
+      return { ...state, messageSend: ms, isSend: false };
     }
-    case "SEND_MESSAGE": {
+    case END_TYPE_MESSAGE: {
       const mess = action.message ?? emptyMessage;
-      const ms: ISendMessage = { isSend: true, message: mess, error: "" };
-      return { ...state, messageSend: ms };
+      const ms: ISendMessage = {
+        isSend: false,
+        message: mess,
+        error: "",
+        isTyping: false,
+      };
+      return { ...state, messageSend: ms, isSend: false };
+    }
+
+    case END_SEND_MESSAGE: {
+      const mess = action.message ?? emptyMessage;
+      const ms: ISendMessage = {
+        isSend: true,
+        message: mess,
+        error: "",
+        isTyping: false,
+      };
+      return { ...state, messageSend: ms, isSend: true };
     }
     case "REQUEST_MESSAGES": {
-      console.log("REQUEST_MESSAGES");
+      //console.log("REQUEST_MESSAGES");
       const theme = action.theme ?? "";
-      const mess = Object.assign({}, initialMessages);
+      const mess = Object.assign({}, state.messages);
       mess.isFetching = true;
       mess.didInvalidate = false;
 
@@ -105,19 +137,28 @@ export const reducer = (state = initalState, action: actionMessage) => {
     }
     case "RECEIVE_MESSAGES":
     case "RECEIVE_ERROR": {
-      console.log("RECEIVE_MESSAGES");
+      //console.log("RECEIVE_MESSAGES");
       const theme = action.theme ?? "";
       const receive = action.receivedAt ?? Date.now();
       const items = action.messages ?? [];
+
       const error = action.error ?? "";
       const id = action.id;
-      const mess = Object.assign({}, initialMessages, {
+
+      const mess = Object.assign({}, state.messages, {
         lastUpdated: receive,
         items: items,
         error: error,
       });
+
       mess.isFetching = false;
       return { ...state, messages: mess, selectTheme: theme, selectedID: id };
+    }
+    case "APPLY_SMILE": {
+      const mess = action.message ?? emptyMessage;
+      mess.message = smileInText(mess?.message);
+      const ms: ISendMessage = { isSend: true, message: mess, error: "" };
+      return { ...state, messageSend: ms };
     }
 
     default:
