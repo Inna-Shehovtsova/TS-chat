@@ -1,0 +1,88 @@
+body {
+  font-family: sans-serif;
+}
+
+.main {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  align-items: left;
+}
+.gameField {
+  flex-direction: row;
+  display: flex;
+  align-self: center;
+  padding: 20px;
+  border-style: dashed;
+  border-color: burlywood;
+}
+.right {
+  width: 100px;
+}
+.left {
+  width: 100px;
+}
+table {
+  border-collapse: collapse;
+  margin: 30px;
+}
+#app {
+  justify-self: space-between;
+  display: grid;
+}
+.gameControls {
+  padding: 20px;
+}
+.cell {
+  border: 1px solid rgb(196, 204, 168);
+  color: lightgray;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+}
+
+.cell--alive {
+  background-color: rgb(185, 176, 123);
+}
+
+.rowcell {
+  flex-direction: row;
+}
+h1 {
+  text-align: center;
+  font-family: "Courier New", Courier, monospace;
+  color: rgb(185, 176, 123);
+}
+.username {
+  font-family: "Courier New", Courier, monospace;
+  color: rgb(126, 120, 83);
+  font-size: small;
+}
+.text {
+  font-family: "Courier New", Courier, monospace;
+  color: black;
+  font-size: medium;
+}
+.time {
+  font-family: "Courier New", Courier, monospace;
+  color: rgb(35, 33, 22);
+  font-size: small;
+}
+.usersL {
+  color: rgb(241, 235, 204);
+}
+.text_input {
+  width: 200px;
+  padding: 20px;
+  margin: 10px;
+}
+.text_name {
+  width: 100px;
+  height: 20px;
+  padding: 20px;
+  margin: 10px;
+}
+.hide {
+  size: 0;
+}
