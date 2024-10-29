@@ -9,14 +9,12 @@ import { combineReducers, configureStore, Dispatch } from "@reduxjs/toolkit";
 import { getMessagesList, sendMessage } from "./reducer/messagesApi";
 import {
   applySmile,
-  BEGIN_SEND_MESSAGE,
   beginTypeMessage,
   endTypeMessage,
   receiveMessages,
   receiveUser,
   requestMessages,
   sendOneMessage,
-  typeMessage,
 } from "./reducer/Action";
 import { smileCollection } from "./reducer/smileCollection";
 import { IMessage } from "./reducer/iMessage";
@@ -31,18 +29,21 @@ function renderSmileTable() {
 }
 renderSmileTable();
 //const el = document.getElementById("app") as HTMLElement;
-const el = document.querySelector("#app") as HTMLElement;
-el.innerHTML = `
-    <div class="message"><input class="text_name" value="name"></input></p>
-    <p><input class="text_input" value="message text"></input></p>
-    
-    <p><button class="send">Send message</button></p>
-    
-    <p class="attention"></p>
-    <p class="theme"></p>
-    <h1 style="color: red" class="error"></h1>
-    <ul class="messages"></ul>`;
-const elUsers = document.querySelector("#users") as HTMLElement;
+function renderCentralElement() {
+  const el = document.querySelector("#app") as HTMLElement;
+  el.innerHTML = `
+        <div class="message"><input class="text_name" value="name"></input></p>
+        <p><input class="text_input" value="message text"></input></p>
+        
+        <p><button class="send">Send message</button></p>
+        
+        <p class="attention"></p>
+        <p class="theme"></p>
+        <h1 style="color: red" class="error"></h1>
+        <ul class="messages"></ul>`;
+  const elUsers = document.querySelector("#users") as HTMLElement;
+}
+renderCentralElement();
 const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
@@ -54,39 +55,12 @@ export function asyncGet() {
     dispatch(requestMessages(""));
     console.log("request messate");
     getMessagesList().then((mesAr: IMessage[]) => {
-      const state = getState();
-
       console.log("before");
-      const date1 = new Date(2024, 0, 0);
-      const a1 = mesAr.filter((val) => {
-        if (val.date) {
-          return val.date > date1;
-        }
-        return false;
-      });
-      const m = a1.sort((a, b) =>
+      const m = mesAr.sort((a, b) =>
         b.date!.valueOf() > a.date!.valueOf() ? 1 : -1,
       );
-      const newMessage = new Array<IMessage>();
-      console.log(
-        "state.message.messages.items.length ",
-        state.message.messages.items.length,
-      );
-      if (state.message.messages.items.length > 0) {
-        const firsel = state.message.messages.items[0];
-        const index = m.findIndex(
-          (val) =>
-            val.message === firsel.message &&
-            val.name === firsel.name &&
-            val.now === firsel.now,
-        );
-        const m1 = m.filter((val, i) => i < index);
-        console.log("m1, m1");
-        dispatch(receiveMessages("", m, m1));
-      } else {
-        console.log("m, m");
-        dispatch(receiveMessages("", m, m));
-      }
+
+      dispatch(receiveMessages("", m));
 
       const u = new Array<string>();
       m.forEach((val) => {
@@ -148,17 +122,12 @@ function applySmileInput(e: Event) {
   if (smile.hasAttribute("my_data_smile")) {
     st = smile.getAttribute("my_data_smile") ?? "";
   }
-  console.log(smile);
-  console.log(st);
-  const text = document.querySelector(".text_input") as HTMLInputElement;
-  const name = document.querySelector(".text_name") as HTMLInputElement;
-  const mess: IMessage = {
-    message: text.value + st,
-    name: name.value,
-    now: Date.now(),
-  };
-  console.log(text);
-  store.dispatch(beginTypeMessage(mess));
+  const state = store.getState();
+  if (state.message.messageSend) {
+    const mess: IMessage = { ...state.message.messageSend.message };
+    mess.message += st;
+    store.dispatch(beginTypeMessage(mess));
+  }
 }
 function typing() {
   const text = document.querySelector(".text_input") as HTMLInputElement;
@@ -174,16 +143,12 @@ function typing() {
 
 async function send() {
   console.log("send");
-  const text = document.querySelector(".text_input") as HTMLInputElement;
-  const name = document.querySelector(".text_name") as HTMLInputElement;
-
-  const mess: IMessage = {
-    message: text.value,
-    name: name.value,
-    now: Date.now(),
-  };
-
-  store.dispatch(asyncSend(mess));
+  const state = store.getState();
+  if (state.message.messageSend) {
+    const mess: IMessage = { ...state.message.messageSend.message };
+    mess.now = Date.now();
+    store.dispatch(asyncSend(mess));
+  }
 }
 type RenderMessages = {
   isLoading: boolean;
@@ -194,6 +159,7 @@ type RenderMessages = {
   text: ISendMessage | undefined;
 };
 const render = (props: RenderMessages) => {
+  const el = document.querySelector("#app") as HTMLElement;
   console.log("render", props);
 
   if (props.isLoading) {
@@ -268,6 +234,7 @@ const selectUsersData = (state: any): RenderUsers => ({
 });
 
 const renderUsers = (props: RenderUsers) => {
+  const elUsers = document.querySelector("#users") as HTMLElement;
   console.log("users", props);
   if (props.isLoading) {
     return (elUsers.innerHTML = "users is loading");
